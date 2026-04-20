@@ -2,7 +2,7 @@ import streamlit as st
 import time
 
 # App Configuration
-st.set_page_config(page_title="Grade 8 Maths Quiz 🇿🇦", page_icon="🔢", layout="centered")
+st.set_page_config(page_title="Grade 8 Maths Flashcards 🇿🇦", page_icon="🔢")
 
 # 100-Card Mathematics Dataset (CAPS Aligned)
 data = {
@@ -114,65 +114,73 @@ data = {
     ]
 }
 
-# Session State for tracking
+# Session State Initialization
 if "card_idx" not in st.session_state:
     st.session_state.card_idx = 0
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
-if "answered" not in st.session_state:
-    st.session_state.answered = False
+if "flipped" not in st.session_state:
+    st.session_state.flipped = False
 
 # Sidebar
-st.sidebar.title("📚 Exam Ready")
-level = st.sidebar.selectbox("Select Study Level", list(data.keys()))
+st.sidebar.title("📚 Maths Prep")
+level = st.sidebar.selectbox("Choose Level", list(data.keys()))
 
-# Reset when level changes
+# Reset logic for level change
 if "current_level" not in st.session_state or st.session_state.current_level != level:
     st.session_state.card_idx = 0
     st.session_state.score = 0
     st.session_state.current_level = level
-    st.session_state.answered = False
+    st.session_state.flipped = False
     st.session_state.start_time = time.time()
 
 cards = data[level]
 current_card = cards[st.session_state.card_idx]
 
 # UI Header
-st.title("🇿🇦 Grade 8 Maths Quiz")
-col1, col2 = st.columns(2)
-col1.metric("Score", f"{st.session_state.score}/{len(cards)}")
+st.title("🇿🇦 Grade 8 Maths Flashcards")
+col_score, col_time = st.columns(2)
+col_score.metric("Score", f"{st.session_state.score}/{len(cards)}")
 elapsed = int(time.time() - st.session_state.start_time)
-col2.metric("Time Elapsed", f"{elapsed}s")
+col_time.metric("Timer", f"{elapsed}s")
 
 st.progress((st.session_state.card_idx + 1) / len(cards))
 
-# Quiz Display
+# Flashcard Area
 st.markdown("---")
 st.subheader(f"Question {st.session_state.card_idx + 1}:")
 st.info(current_card["q"])
 
-# Answer Logic
-user_ans = st.text_input("Your Answer:", key=f"q_{st.session_state.card_idx}")
-
-# Display Correct/Incorrect logic
-if st.button("Check Answer"):
-    st.session_state.answered = True
-    if user_ans.strip().lower() == current_card["a"].strip().lower():
-        st.success(f"✅ Correct!")
-        st.session_state.score += 1
-    else:
-        st.error(f"❌ Incorrect.")
-
-# Always show the full answer if the user has attempted a check
-if st.session_state.answered:
-    st.markdown(f"**Correct Answer:** {current_card['a']}")
-    if st.button("Next Question ➡️"):
-        st.session_state.card_idx = (st.session_state.card_idx + 1) % len(cards)
-        st.session_state.answered = False
+if not st.session_state.flipped:
+    if st.button("🔍 SHOW ANSWER"):
+        st.session_state.flipped = True
         st.rerun()
+else:
+    st.success(f"### Answer: {current_card['a']}")
+    st.write("Did you get it right?")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("✅ Yes (Correct)"):
+            st.session_state.score += 1
+            st.session_state.card_idx = (st.session_state.card_idx + 1) % len(cards)
+            st.session_state.flipped = False
+            st.rerun()
+    with c2:
+        if st.button("❌ No (Incorrect)"):
+            st.session_state.card_idx = (st.session_state.card_idx + 1) % len(cards)
+            st.session_state.flipped = False
+            st.rerun()
 
-# Timer refresh logic (updates UI every 1s)
+# Reset Option
+if st.sidebar.button("Restart Level"):
+    st.session_state.score = 0
+    st.session_state.card_idx = 0
+    st.session_state.start_time = time.time()
+    st.session_state.flipped = False
+    st.rerun()
+
+# Refresh timer
 time.sleep(1)
 st.rerun()
