@@ -2,7 +2,7 @@ import streamlit as st
 import time
 
 # App Configuration
-st.set_page_config(page_title="Grade 8 Maths Quiz 🇿🇦", page_icon="🔢")
+st.set_page_config(page_title="Grade 8 Maths Quiz 🇿🇦", page_icon="🔢", layout="centered")
 
 # 100-Card Mathematics Dataset (CAPS Aligned)
 data = {
@@ -156,21 +156,23 @@ st.info(current_card["q"])
 # Answer Logic
 user_ans = st.text_input("Your Answer:", key=f"q_{st.session_state.card_idx}")
 
-if st.button("Check Answer") and not st.session_state.answered:
+# Display Correct/Incorrect logic
+if st.button("Check Answer"):
     st.session_state.answered = True
     if user_ans.strip().lower() == current_card["a"].strip().lower():
-        st.success(f"✅ Correct! The answer is: {current_card['a']}")
+        st.success(f"✅ Correct!")
         st.session_state.score += 1
     else:
-        st.error(f"❌ Wrong! The correct answer is: {current_card['a']}")
+        st.error(f"❌ Incorrect.")
 
-# Next Button
+# Always show the full answer if the user has attempted a check
 if st.session_state.answered:
+    st.markdown(f"**Correct Answer:** {current_card['a']}")
     if st.button("Next Question ➡️"):
         st.session_state.card_idx = (st.session_state.card_idx + 1) % len(cards)
         st.session_state.answered = False
         st.rerun()
 
-# Timer refresh
+# Timer refresh logic (updates UI every 1s)
 time.sleep(1)
 st.rerun()
