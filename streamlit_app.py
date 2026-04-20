@@ -114,7 +114,7 @@ data = {
     ]
 }
 
-# Initialise Session State
+# 1. Initialize State
 if "card_idx" not in st.session_state:
     st.session_state.card_idx = 0
 if "score" not in st.session_state:
@@ -124,22 +124,31 @@ if "start_time" not in st.session_state:
 if "flipped" not in st.session_state:
     st.session_state.flipped = False
 
-# Sidebar Setup
+# 2. Sidebar Setup
 st.sidebar.title("📚 Maths Prep")
 level = st.sidebar.selectbox("Choose Level", list(data.keys()))
 
-# LOGIC: Reset everything if level changes
+# 3. Handle Resets immediately
 if "current_level" not in st.session_state or st.session_state.current_level != level:
     st.session_state.card_idx = 0
     st.session_state.score = 0
     st.session_state.flipped = False
     st.session_state.current_level = level
     st.session_state.start_time = time.time()
+    st.rerun()
 
+if st.sidebar.button("Restart Level"):
+    st.session_state.score = 0
+    st.session_state.card_idx = 0
+    st.session_state.flipped = False
+    st.session_state.start_time = time.time()
+    st.rerun()
+
+# 4. Load current card
 cards = data[level]
 current_card = cards[st.session_state.card_idx]
 
-# UI Header
+# 5. UI Layout
 st.title("🇿🇦 Grade 8 Maths Flashcards")
 col_score, col_time = st.columns(2)
 col_score.metric("Score", f"{st.session_state.score}/{len(cards)}")
@@ -148,20 +157,20 @@ col_time.metric("Timer", f"{elapsed}s")
 
 st.progress((st.session_state.card_idx + 1) / len(cards))
 
-# Flashcard Area
 st.markdown("---")
 st.subheader(f"Question {st.session_state.card_idx + 1}:")
 st.info(current_card["q"])
 
-# Section shown ONLY if card is NOT flipped
-if not st.session_state.flipped:
+# 6. Strict Conditional UI (This prevents the 'Yes/No' showing early)
+if st.session_state.flipped == False:
+    # ONLY show the "Show Answer" button here
     if st.button("🔍 SHOW ANSWER"):
         st.session_state.flipped = True
         st.rerun()
-
-# Section shown ONLY if card IS flipped
 else:
+    # ONLY show Answer and Yes/No buttons here
     st.success(f"### Answer: {current_card['a']}")
+    st.write("---")
     st.write("Did you get it right?")
     c1, c2 = st.columns(2)
     with c1:
@@ -176,14 +185,6 @@ else:
             st.session_state.flipped = False
             st.rerun()
 
-# Sidebar Reset Button
-if st.sidebar.button("Restart Level"):
-    st.session_state.score = 0
-    st.session_state.card_idx = 0
-    st.session_state.flipped = False
-    st.session_state.start_time = time.time()
-    st.rerun()
-
-# Refresh timer UI
+# Auto-refresh timer every second
 time.sleep(1)
 st.rerun()
