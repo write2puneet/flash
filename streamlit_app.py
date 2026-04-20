@@ -1,68 +1,95 @@
 import streamlit as st
+import time
 
 # App Configuration
-st.set_page_config(page_title="Grade 8 SA Flashcards", page_icon="🇿🇦")
+st.set_page_config(page_title="Grade 8 Maths Challenge", page_icon="🇿🇦")
 
-# Curriculum Data
+# Mathematics Data (Truncated for display - keep your 100 cards here)
 data = {
-    "Level 1 (Foundation)": [
-        {"q": "What is the capital city of Gauteng?", "a": "Johannesburg"},
-        {"q": "In EMS, what does 'VAT' stand for?", "a": "Value Added Tax"},
-        {"q": "Which ocean is on the east coast of South Africa?", "a": "The Indian Ocean"}
+    "Level 1: Foundation": [
+        {"q": "What is the square root of 144?", "a": "12"},
+        {"q": "What is the HCF of 12 and 18?", "a": "6"},
+        # ... include all other cards from previous list here ...
     ],
-    "Level 2 (Intermediate)": [
-        {"q": "Who was the first democratically elected president of SA?", "a": "Nelson Mandela"},
-        {"q": "What is the boiling point of pure water at sea level?", "a": "100 Degrees Celsius"},
-        {"q": "True or False: A 'Need' is something you must have to survive.", "a": "True"}
+    "Level 2: Intermediate": [
+        {"q": "Solve for x: 2x = 10", "a": "x = 5"},
+        {"q": "What is 20% of R250?", "a": "R50"},
     ],
-    "Level 3 (Exam Prep)": [
-        {"q": "Explain the law of demand in Economics.", "a": "As price increases, quantity demanded decreases."},
-        {"q": "What are the three branches of the SA government?", "a": "Legislative, Executive, and Judicial"},
-        {"q": "What is the chemical symbol for Gold?", "a": "Au"}
+    "Level 3: Exam Prep": [
+        {"q": "Solve for x: 3(x - 2) = 9", "a": "x = 5"},
+        {"q": "Calculate the hypotenuse: sides 3cm and 4cm.", "a": "5cm"},
     ]
 }
 
-# Sidebar for Level Selection
-st.sidebar.title("📚 Study Settings")
-level = st.sidebar.selectbox("Choose Your Level", list(data.keys()))
-
-# Initialize session state for tracking
+# Initialize session state for scoring and timing
 if "card_index" not in st.session_state:
     st.session_state.card_index = 0
 if "flipped" not in st.session_state:
     st.session_state.flipped = False
+if "score" not in st.session_state:
+    st.session_state.score = 0
+if "start_time" not in st.session_state:
+    st.session_state.start_time = time.time()
 
-# Load cards for selected level
-cards = data[level]
+# Sidebar Settings
+st.sidebar.title("🎮 Game Controls")
+level_key = st.sidebar.selectbox("Select Study Level", list(data.keys()))
 
-# UI Layout
-st.title(f"🇿🇦 Grade 8 Study: {level}")
-st.progress((st.session_state.card_index + 1) / len(cards))
+# Reset everything if level changes
+if "last_level" not in st.session_state or st.session_state.last_level != level_key:
+    st.session_state.card_index = 0
+    st.session_state.score = 0
+    st.session_state.flipped = False
+    st.session_state.last_level = level_key
+    st.session_state.start_time = time.time()
 
+cards = data[level_key]
 current_card = cards[st.session_state.card_index]
 
-# Flashcard Display
+# Main UI
+st.title("🇿🇦 Grade 8 Maths Challenge")
+
+# Top Row: Score and Timer
+col_s, col_t = st.columns(2)
+with col_s:
+    st.metric("Current Score", f"{st.session_state.score}/{len(cards)}")
+with col_t:
+    elapsed_time = int(time.time() - st.session_state.start_time)
+    st.metric("Time Elapsed", f"{elapsed_time}s")
+
+st.progress((st.session_state.card_index + 1) / len(cards))
+
+# Flashcard Area
 st.markdown("---")
 if not st.session_state.flipped:
-    st.subheader("Question:")
-    st.info(current_card["q"])
-    if st.button("🔍 Flip to see Answer"):
+    st.info(f"### Question {st.session_state.card_index + 1}:\n{current_card['q']}")
+    if st.button("🔍 SHOW ANSWER"):
         st.session_state.flipped = True
         st.rerun()
 else:
-    st.subheader("Answer:")
-    st.success(current_card["a"])
-    if st.button("⬅️ Back to Question"):
-        st.session_state.flipped = False
-        st.rerun()
-st.markdown("---")
+    st.success(f"### Answer:\n{current_card['a']}")
+    
+    st.write("Did you get it right?")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("✅ Yes (Add Point)"):
+            st.session_state.score += 1
+            st.session_state.card_index = (st.session_state.card_index + 1) % len(cards)
+            st.session_state.flipped = False
+            st.rerun()
+    with c2:
+        if st.button("❌ No (Next Card)"):
+            st.session_state.card_index = (st.session_state.card_index + 1) % len(cards)
+            st.session_state.flipped = False
+            st.rerun()
 
-# Navigation
-col1, col2 = st.columns(2)
-with col1:
-    st.write(f"Card {st.session_state.card_index + 1} of {len(cards)}")
-with col2:
-    if st.button("Next Card ➡️"):
-        st.session_state.card_index = (st.session_state.card_index + 1) % len(cards)
-        st.session_state.flipped = False
-        st.rerun()
+# Reset Button
+if st.sidebar.button("♻️ Reset Score & Timer"):
+    st.session_state.score = 0
+    st.session_state.card_index = 0
+    st.session_state.start_time = time.time()
+    st.rerun()
+
+# Auto-refresh helper for the timer
+time.sleep(1)
+st.rerun()
