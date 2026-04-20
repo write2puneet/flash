@@ -114,7 +114,7 @@ data = {
     ]
 }
 
-# Session State Initialization
+# Initialise Session State
 if "card_idx" not in st.session_state:
     st.session_state.card_idx = 0
 if "score" not in st.session_state:
@@ -124,16 +124,16 @@ if "start_time" not in st.session_state:
 if "flipped" not in st.session_state:
     st.session_state.flipped = False
 
-# Sidebar
+# Sidebar Setup
 st.sidebar.title("📚 Maths Prep")
 level = st.sidebar.selectbox("Choose Level", list(data.keys()))
 
-# Reset logic for level change
+# LOGIC: Reset everything if level changes
 if "current_level" not in st.session_state or st.session_state.current_level != level:
     st.session_state.card_idx = 0
     st.session_state.score = 0
-    st.session_state.current_level = level
     st.session_state.flipped = False
+    st.session_state.current_level = level
     st.session_state.start_time = time.time()
 
 cards = data[level]
@@ -153,10 +153,13 @@ st.markdown("---")
 st.subheader(f"Question {st.session_state.card_idx + 1}:")
 st.info(current_card["q"])
 
+# Section shown ONLY if card is NOT flipped
 if not st.session_state.flipped:
     if st.button("🔍 SHOW ANSWER"):
         st.session_state.flipped = True
         st.rerun()
+
+# Section shown ONLY if card IS flipped
 else:
     st.success(f"### Answer: {current_card['a']}")
     st.write("Did you get it right?")
@@ -173,14 +176,14 @@ else:
             st.session_state.flipped = False
             st.rerun()
 
-# Reset Option
+# Sidebar Reset Button
 if st.sidebar.button("Restart Level"):
     st.session_state.score = 0
     st.session_state.card_idx = 0
-    st.session_state.start_time = time.time()
     st.session_state.flipped = False
+    st.session_state.start_time = time.time()
     st.rerun()
 
-# Refresh timer
+# Refresh timer UI
 time.sleep(1)
 st.rerun()
