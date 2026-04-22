@@ -2,23 +2,121 @@ import streamlit as st
 import time
 from datetime import datetime
 
-# --- CONFIGURATION & BIRTHDAY LOGIC ---
+# --- CONFIG & BIRTHDAY ---
 st.set_page_config(page_title="Aanya's Study Hub", page_icon="🎂")
 
-# Birthday logic: Only shows until end of 23 April 2026
-# (Note: Python uses YYYY, M, D)
+# Celebrate Aanya's 13th Birthday!
 target_date = datetime(2026, 4, 23, 23, 59)
-is_birthday_period = datetime.now() <= target_date
-
-if is_birthday_period:
+if datetime.now() <= target_date:
     st.balloons()
     st.markdown("""
         <div style="background-color: #FFD700; padding: 25px; border-radius: 20px; text-align: center; border: 5px solid #FF69B4;">
             <h1 style="color: #FF1493; margin: 0;">🎉 Happy 13th Birthday, Aanya! 🎂</h1>
-            <p style="font-size: 1.4rem; color: #333;">Welcome to the <b>Teen Club</b>! Good luck with your Grade 8 journey! ✨</p>
+            <p style="font-size: 1.4rem; color: #333;">Welcome to the <b>Teens Club</b>! You're 13 today! ✨</p>
         </div>
     """, unsafe_allow_html=True)
 
+# --- SET NAME MAPPING FOR ALL SUBJECTS ---
+set_titles = {
+    "Mathamatics": {
+        "Set 1": "Whole Numbers & Integers", "Set 2": "Exponents & Roots", 
+        "Set 3": "Fractions & Decimals", "Set 4": "Ratios & Finance",
+        "Set 5": "Numeric & Geometric Patterns", "Set 6": "Algebraic Expressions", 
+        "Set 7": "Algebraic Equations", "Set 8": "Geometry (Lines & Angles)",
+        "Set 9": "Geometry (2D Shapes)", "Set 10": "Data & 3D Shapes"
+    },
+    "Natural Sciences": {
+        "Set 1": "Photosynthesis & Respiration", "Set 2": "Ecosystems & Feeding",
+        "Set 3": "Atoms & Elements", "Set 4": "The Periodic Table",
+        "Set 5": "Particle Model of Matter", "Set 6": "Chemical Reactions",
+        "Set 7": "Static Electricity", "Set 8": "Energy & Resistance",
+        "Set 9": "Series & Parallel Circuits", "Set 10": "Visible Light & Solar System"
+    },
+    "Afrikaans": {
+        "Set 1": "Basiese Woordeskat", "Set 2": "Meervoude (Plurals)",
+        "Set 3": "Verkleinwoorde", "Set 4": "Teenoorgesteldes",
+        "Set 5": "Verlede Tyd", "Set 6": "Toekomende Tyd",
+        "Set 7": "STOMPI Reëls", "Set 8": "Voornaamwoorde",
+        "Set 9": "Voegwoorde (Conjunctions)", "Set 10": "Algemene Taalleer"
+    },
+    "English": {
+        "Set 1": "Parts of Speech", "Set 2": "Punctuation",
+        "Set 3": "Figures of Speech", "Set 4": "Tenses & Verbs",
+        "Set 5": "Vocabulary & Spelling", "Set 6": "Active & Passive Voice",
+        "Set 7": "Direct & Indirect Speech", "Set 8": "Poetry Terminology",
+        "Set 9": "Visual Literacy", "Set 10": "Comprehension Skills"
+    },
+    "EMS": {
+        "Set 1": "Government & Budget", "Set 2": "Accounting Basics",
+        "Set 3": "Source Documents", "Set 4": "Cash Receipts Journal",
+        "Set 5": "Cash Payments Journal", "Set 6": "Entrepreneurship",
+        "Set 7": "Factors of Production", "Set 8": "Management Levels",
+        "Set 9": "Forms of Ownership", "Set 10": "Markets & Growth"
+    },
+    "Geography": {
+        "Set 1": "Latitude & Longitude", "Set 2": "Map Scale",
+        "Set 3": "Satellite Imagery", "Set 4": "Rural vs Urban",
+        "Set 5": "Land Use Zones", "Set 6": "Transport & Trade",
+        "Set 7": "Migration Factors", "Set 8": "Global Megacities",
+        "Set 9": "Climate & Smog", "Set 10": "SA Settlement Case Studies"
+    },
+    "History": {
+        "Set 1": "Industrial Revolution", "Set 2": "Working Conditions",
+        "Set 3": "SA before 1860", "Set 4": "Diamond Mining",
+        "Set 5": "Gold & Witwatersrand", "Set 6": "Migrant Labour",
+        "Set 7": "Scramble for Africa", "Set 8": "Resistance Wars",
+        "Set 9": "Colonial Changes", "Set 10": "Union of SA (1910)"
+    },
+    "Life Orientation": {
+        "Set 1": "Self-Concept", "Set 2": "Peer Pressure",
+        "Set 3": "Relationships", "Set 4": "Constitutional Rights",
+        "Set 5": "Environment Health", "Set 6": "Safety & Nutrition",
+        "Set 7": "Substance Abuse", "Set 8": "Career Categories",
+        "Set 9": "Learning Styles", "Set 10": "Exam Techniques"
+    },
+    "Technology": {
+        "Set 1": "Design Process", "Set 2": "Types of Structures",
+        "Set 3": "Forces & Stability", "Set 4": "Levers (Classes 1-3)",
+        "Set 5": "Gears & Ratios", "Set 6": "Pulleys & Cams",
+        "Set 7": "Electrical Circuits", "Set 8": "Processing Materials",
+        "Set 9": "Graphic Communication", "Set 10": "Impact of Tech"
+    }
+}
+
+
+# --- NAVIGATION ---
+st.sidebar.title("⭐ Aanya's Study Zone")
+subj = st.sidebar.selectbox("Subject", ["Mathamatics", "Natural Sciences", "Afrikaans", "English", "EMS", "Geography", "History", "Life Orientation", "Technology"])
+
+# Display the custom set names in the dropdown
+set_options = [f"Set {i+1}" for i in range(10)]
+def format_set_name(s_key):
+    return f"{s_key}: {set_titles.get(subj, {}).get(s_key, 'General')}"
+
+selected_set_key = st.sidebar.selectbox("Select Set", set_options, format_func=format_set_name)
+
+# --- SESSION STATE ---
+if "card_idx" not in st.session_state: st.session_state.card_idx = 0
+if "score" not in st.session_state: st.session_state.score = 0
+if "flipped" not in st.session_state: st.session_state.flipped = False
+
+# FIX: Force clean refresh on Level Change
+if "last_nav" not in st.session_state or st.session_state.last_nav != (subj, selected_set_key):
+    st.session_state.card_idx = 0
+    st.session_state.score = 0
+    st.session_state.flipped = False
+    st.session_state.last_nav = (subj, selected_set_key)
+    st.rerun()
+
+# FIX: Force clean refresh on Restart
+if st.sidebar.button("Restart Level"):
+    st.session_state.score = 0
+    st.session_state.card_idx = 0
+    st.session_state.flipped = False
+    st.rerun()
+
+# --- LOAD CARDS ---
+# Ensure your 'subjects_data' dict is placed 
 # --- ACTUAL CONTENT DATASET ---
 # I have started the first set for each. You can add more questions to the lists below.
 subjects_data = {
@@ -1113,71 +1211,45 @@ subjects_data = {
     ]
 }
 
-# --- NAVIGATION ---
-st.sidebar.title("⭐ Aanya's Study Hub")
-subj = st.sidebar.selectbox("Subject", list(subjects_data.keys()))
 
-# Placeholder for Sets: Currently the 10 questions above are "Set 1"
-# In a full app, you would add 10 questions for each set in the lists above.
-set_num = st.sidebar.selectbox("Select Set", [f"Set {i+1}" for i in range(10)])
-
-# --- SESSION STATE ---
-if "card_idx" not in st.session_state:
-    st.session_state.card_idx = 0
-if "score" not in st.session_state:
-    st.session_state.score = 0
-if "flipped" not in st.session_state:
-    st.session_state.flipped = False
-
-# Reset on change
-if "last_nav" not in st.session_state or st.session_state.last_nav != (subj, set_num):
-    st.session_state.card_idx = 0
-    st.session_state.score = 0
-    st.session_state.flipped = False
-    st.session_state.last_nav = (subj, set_num)
-    st.rerun()
-
-# Load current card (Looping back to 0 if the list is shorter than 10)
-all_subj_cards = subjects_data[subj]
-current_card = all_subj_cards[st.session_state.card_idx % len(all_subj_cards)]
+set_num = int(selected_set_key.split()[-1]) - 1
+all_subj_cards = subjects_data.get(subj, [])
+set_cards = all_subj_cards[set_num*10 : (set_num+1)*10]
 
 # --- UI ---
-st.write(f"### {subj} | {set_num}")
-st.metric("Set Score", f"{st.session_state.score}/10")
-st.progress((st.session_state.card_idx + 1) / 10)
+if len(set_cards) > 0:
+    current_card = set_cards[st.session_state.card_idx % len(set_cards)]
+    
+    st.write(f"### {subj} | {format_set_name(selected_set_key)}")
+    st.metric("Score", f"{st.session_state.score}/{len(set_cards)}")
+    st.progress((st.session_state.card_idx + 1) / len(set_cards))
 
-st.markdown("---")
-st.subheader(f"Question {st.session_state.card_idx + 1}:")
-st.info(current_card["q"])
+    st.markdown("---")
+    st.subheader(f"Question {st.session_state.card_idx + 1}:")
+    st.info(current_card["q"])
 
-if not st.session_state.flipped:
-    if st.button("🔍 SHOW ANSWER"):
-        st.session_state.flipped = True
-        st.rerun()
+    if not st.session_state.flipped:
+        if st.button("🔍 SHOW ANSWER"):
+            st.session_state.flipped = True
+            st.rerun()
+    else:
+        st.success(f"**Answer:** {current_card['a']}")
+        st.write("Did you get it right?")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("✅ Yes"):
+                st.session_state.score += 1
+                st.session_state.card_idx += 1
+                st.session_state.flipped = False
+                st.rerun()
+        with c2:
+            if st.button("❌ No"):
+                st.session_state.card_idx += 1
+                st.session_state.flipped = False
+                st.rerun()
 else:
-    st.success(f"**Answer:** {current_card['a']}")
-    st.write("---")
-    st.write("Did you get it right?")
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("✅ Yes"):
-            st.session_state.score += 1
-            st.session_state.card_idx += 1
-            st.session_state.flipped = False
-            st.rerun()
-    with c2:
-        if st.button("❌ No"):
-            st.session_state.card_idx += 1
-            st.session_state.flipped = False
-            st.rerun()
+    st.warning("Please add questions to this subject in the code!")
 
-# Sidebar Reset
-if st.sidebar.button("Restart Level"):
-    st.session_state.score = 0
-    st.session_state.card_idx = 0
-    st.session_state.flipped = False
-    st.rerun()
-
-# Refresh timer
+# Timer update
 time.sleep(1)
 st.rerun()
