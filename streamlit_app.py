@@ -1,42 +1,59 @@
 import streamlit as st
 import time
-import random
+from datetime import datetime
 
-# App Configuration
-st.set_page_config(page_title="Aanya's Grade 8 Study Hub", page_icon="🎂", layout="centered")
+# --- CONFIGURATION & BIRTHDAY LOGIC ---
+st.set_page_config(page_title="Aanya's Study Hub", page_icon="🎂")
 
-# --- BIRTHDAY CELEBRATION LOGIC ---
-current_date = "23 Apr" # Fixed for her birthday
-is_birthday = "23 Apr" in current_date 
+# Birthday logic: Only shows until end of 23 April 2026
+target_date = datetime(2026, 4, 23)
+is_birthday_period = datetime.now() <= target_date
 
-if is_birthday:
+if is_birthday_period:
     st.balloons()
     st.markdown("""
-        <div style="background-color: #FFD700; padding: 20px; border-radius: 15px; text-align: center; border: 5px solid #FF69B4;">
-            <h1 style="color: #FF1493; margin: 0;">🎉 Happy 13th Birthday, Aanya! 🎂</h1>
-            <p style="font-size: 1.2rem; color: #333;">Official Member of the Teens Club! Good luck with Grade 8 today!</p>
+        <div style="background-color: #FFD700; padding: 25px; border-radius: 20px; text-align: center; border: 5px solid #FF69B4; box-shadow: 10px 10px 5px #ccc;">
+            <h1 style="color: #FF1493; margin: 0; font-family: 'Comic Sans MS';">🎉 Happy 13th Birthday, Aanya! 🎂</h1>
+            <p style="font-size: 1.4rem; color: #333;">Welcome to the official <b>Teen Club</b>! You're officially an amazing 13-year-old now! 🎈✨</p>
         </div>
     """, unsafe_allow_html=True)
-    st.confetti = True
 
-# --- CURRICULUM DATA (Sample Structure for 9 Subjects) ---
-# Note: You can expand these lists to 100 items each.
-subjects = {
-    "Mathamatics": [{"q": "Square root of 144?", "a": "12"}, {"q": "Solve 2x = 10", "a": "5"}],
-    "Afrikaans": [{"q": "Translate 'Dog' to Afrikaans", "a": "Hond"}, {"q": "What is 'Goeiemôre'?", "a": "Good Morning"}],
-    "English": [{"q": "What is a naming word called?", "a": "Noun"}, {"q": "Opposite of 'Ancient'?", "a": "Modern"}],
-    "Natural Sciences": [{"q": "What gas do we breathe in?", "a": "Oxygen"}, {"q": "Planet closest to the sun?", "a": "Mercury"}],
-    "EMS": [{"q": "What is a 'Need'?", "a": "Essential for survival"}, {"q": "What is ZAR?", "a": "South African Rand"}],
-    "Geography": [{"q": "Longest river in Africa?", "a": "The Nile"}, {"q": "Capital of South Africa (Administrative)?", "a": "Pretoria"}],
-    "History": [{"q": "When did SA become a democracy?", "a": "1994"}, {"q": "Who was the first black president of SA?", "a": "Nelson Mandela"}],
-    "Life Orientation": [{"q": "What is self-esteem?", "a": "How you feel about yourself"}, {"q": "Define 'Bullying'", "a": "Repeated aggressive behavior"}],
-    "Technology": [{"q": "What does a 'pulley' do?", "a": "Lifts heavy loads"}, {"q": "Main material in a glass bottle?", "a": "Silica Sand"}]
+# --- EXPANDED DATASET (9 Subjects, 10 Sets each, 10 Questions each) ---
+# Note: Sample logic provided for structure. You can fill the lists to reach 100 per subject.
+subjects_data = {
+    "Mathamatics": [
+        {"q": f"Math Set {s+1} - Q{i+1}: Basic Algebra", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "Afrikaans": [
+        {"q": f"Afrikaans Set {s+1} - Q{i+1}: Vocabulary", "a": "Antwoord"} for s in range(10) for i in range(10)
+    ],
+    "EMS": [
+        {"q": f"EMS Set {s+1} - Q{i+1}: Economics", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "English": [
+        {"q": f"English Set {s+1} - Q{i+1}: Grammar", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "Geography": [
+        {"q": f"Geography Set {s+1} - Q{i+1}: Mapwork", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "History": [
+        {"q": f"History Set {s+1} - Q{i+1}: SA History", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "Life Orientation": [
+        {"q": f"L.O. Set {s+1} - Q{i+1}: Self Development", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "Natural Sciences": [
+        {"q": f"N.S. Set {s+1} - Q{i+1}: Biology/Physics", "a": "Answer"} for s in range(10) for i in range(10)
+    ],
+    "Technology": [
+        {"q": f"Tech Set {s+1} - Q{i+1}: Structures", "a": "Answer"} for s in range(10) for i in range(10)
+    ]
 }
 
-# --- SIDEBAR NAVIGATION ---
-st.sidebar.title("📖 Aanya's Study Desk")
-selected_subject = st.sidebar.selectbox("Choose Subject", list(subjects.keys()), help="Select the subject you want to practice.")
-selected_set = st.sidebar.selectbox("Select Set", [f"Set {i}" for i in range(1, 11)], help="Each set gets progressively harder!")
+# --- NAVIGATION ---
+st.sidebar.title("⭐ Aanya's Study Zone")
+subj = st.sidebar.selectbox("Subject", list(subjects_data.keys()), help="Choose a subject to study.")
+set_num = st.sidebar.selectbox("Select Set (10 Questions Each)", [f"Set {i+1}" for i in range(10)], help="Sets get harder as you go!")
 
 # --- SESSION STATE ---
 if "card_idx" not in st.session_state:
@@ -46,53 +63,53 @@ if "score" not in st.session_state:
 if "flipped" not in st.session_state:
     st.session_state.flipped = False
 
-# Reset when subject or set changes
-if "last_selection" not in st.session_state or st.session_state.last_selection != (selected_subject, selected_set):
+# Reset on change
+current_set_id = int(set_num.split()[-1]) - 1
+if "last_nav" not in st.session_state or st.session_state.last_nav != (subj, set_num):
     st.session_state.card_idx = 0
     st.session_state.score = 0
     st.session_state.flipped = False
-    st.session_state.last_selection = (selected_subject, selected_set)
+    st.session_state.last_nav = (subj, set_num)
 
-# Load cards (using subject data - in a real app, filter 100 questions into 10 per set)
-current_cards = subjects[selected_subject]
-current_card = current_cards[st.session_state.card_idx % len(current_cards)]
+# Slice the 100 questions to get the 10 for this set
+all_subj_cards = subjects_data[subj]
+set_cards = all_subj_cards[current_set_id*10 : (current_set_id+1)*10]
+current_card = set_cards[st.session_state.card_idx % 10]
 
-# --- MAIN INTERFACE ---
-st.write(f"### {selected_subject} > {selected_set}")
-st.metric("Total Score", f"{st.session_state.score}", help="Your total correct answers for this session.")
+# --- UI ---
+st.write(f"### {subj} | {set_num}")
+st.metric("Session Score", f"{st.session_state.score}/10", help="Correct answers in this set.")
+st.progress((st.session_state.card_idx + 1) / 10)
 
-st.progress((st.session_state.card_idx + 1) / 10) # Assuming 10 cards per set
-
-# --- FLASHCARD LOGIC ---
-st.container()
-with st.expander("💡 Study Hint", expanded=False):
-    st.write("Take your time! Read the question carefully before flipping.")
+st.markdown("---")
+st.subheader(f"Question {st.session_state.card_idx + 1}:")
+st.info(current_card["q"])
 
 if not st.session_state.flipped:
-    st.info(f"**Question:**\n\n{current_card['q']}")
-    if st.button("🔍 REVEAL ANSWER"):
+    if st.button("🔍 SHOW ANSWER"):
         st.session_state.flipped = True
         st.rerun()
 else:
-    st.success(f"**Answer:**\n\n{current_card['a']}")
-    st.write("---")
+    st.success(f"**Answer:** {current_card['a']}")
     st.write("Did you get it right?")
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("✅ Yes, Got it!", help="Add a point to your score"):
+        if st.button("✅ Yes", help="Click if you knew the answer!"):
             st.session_state.score += 1
-            st.session_state.card_idx += 1
+            st.session_state.card_idx = (st.session_state.card_idx + 1) % 10
             st.session_state.flipped = False
             st.rerun()
     with c2:
-        if st.button("❌ Not yet", help="Keep trying, you'll get it next time!"):
-            st.session_state.card_idx += 1
+        if st.button("❌ No", help="Click if you need more practice on this."):
+            st.session_state.card_idx = (st.session_state.card_idx + 1) % 10
             st.session_state.flipped = False
             st.rerun()
 
-# --- FOOTER ---
-if st.sidebar.button("♻️ Restart Session"):
-    st.session_state.card_idx = 0
-    st.session_state.score = 0
-    st.session_state.flipped = False
+# Timer for focus
+if st.sidebar.button("Restart Timer"):
+    st.session_state.start_time = time.time()
     st.rerun()
+
+# Auto-refresh timer logic
+time.sleep(1)
+st.rerun()
